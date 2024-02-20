@@ -40,11 +40,11 @@ public class Tests {
         List<User> userListFromResponse = objectMapper.readValue(response.body(), new TypeReference<List<User>>(){});
         for (User user : userListFromResponse) {
             SoftAssert softAssert = new SoftAssert();
-            softAssert.assertTrue(String.valueOf(user.getId()).matches("^\\d{7}$"), "It does not match" + user.getId());
-//            softAssert.assertTrue(user.getName().matches("([^\\s]+)"), "It does not match" + user.getName());
-            softAssert.assertTrue(user.getEmail().matches("^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,9}$"), "It does not match" + user.getEmail());
-            softAssert.assertTrue(user.getGender().matches("(?:male|female)$"), "It does not match" + user.getGender());
-            softAssert.assertTrue(user.getStatus().matches("(?:inactive|active)$"), "It does not match" + user.getStatus());
+            softAssert.assertTrue(String.valueOf(user.getId()).matches("^\\d{7}$"), "Id does not match" + user.getId());
+            softAssert.assertTrue(user.getName().matches("[a-zA-Z]+(\\.)?\\s[a-zA-Z]+(\\.)?(\\s[a-zA-Z]+(\\.)?)?"), "Name does not match" + user.getName());
+            softAssert.assertTrue(user.getEmail().matches("^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,9}$"), "Email does not match" + user.getEmail());
+            softAssert.assertTrue(user.getGender().matches("(?:male|female)$"), "Gender does not match" + user.getGender());
+            softAssert.assertTrue(user.getStatus().matches("(?:inactive|active)$"), "Status does not match" + user.getStatus());
             softAssert.assertAll();
         }
     }
