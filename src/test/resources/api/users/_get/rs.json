@@ -1,0 +1,9 @@
+[
+  {
+    "id": "regex:\\d{7}",
+    "name": "type:String",
+    "email": "regex:^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,9}$",
+    "gender": "regex:(?:male|female)$",
+    "status": "regex:(?:inactive|active)$"
+  }
+]
