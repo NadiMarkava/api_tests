@@ -1,0 +1,12 @@
+/target/
+application.log
+/test-output/
+sql.log
+/reports/
+/bin/
+/.classpath
+.DS_Store
+.project
+/.settings/
+.idea
+*.iml
