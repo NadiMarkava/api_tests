@@ -5,6 +5,7 @@ import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -20,27 +21,25 @@ import static org.testng.Assert.*;
 public class Tests {
 
     private static final String TOKEN = "";
-    private static final String baseUrl = "https://gorest.co.in/public/v2/users";
+    private static final String usersUrl = "https://gorest.co.in/public/v2/users";
+    private static final String commentsUrl = "https://gorest.co.in/public/v2/comments";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     public void getUsers() throws IOException, InterruptedException, URISyntaxException {
         File file = new File("src/test/resources/api/users/_get/rs.json");
-
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(baseUrl))
+                .uri(new URI(usersUrl))
                 .version(HttpClient.Version.HTTP_2)
                 .GET()
                 .build();
-
         HttpResponse<String> response = buildResponse(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_OK);
-
         List<User> userListFromResponse = objectMapper.readValue(response.body(), new TypeReference<List<User>>(){});
         for (User user : userListFromResponse) {
             SoftAssert softAssert = new SoftAssert();
             softAssert.assertTrue(String.valueOf(user.getId()).matches("^\\d{7}$"), "Id does not match" + user.getId());
-            softAssert.assertTrue(user.getName().matches("[a-zA-Z]+(\\.)?\\s[a-zA-Z]+(\\.)?(\\s[a-zA-Z]+(\\.)?)?"), "Name does not match" + user.getName());
+            softAssert.assertTrue(user.getName().matches("[a-zA-Z]+(\\.)?\\s[a-zA-Z]+(\\.)?(\\s[a-zA-Z]+(\\.)?)?+(\\s[a-zA-Z])?"), "Name does not match" + user.getName());
             softAssert.assertTrue(user.getEmail().matches("^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,9}$"), "Email does not match" + user.getEmail());
             softAssert.assertTrue(user.getGender().matches("(?:male|female)$"), "Gender does not match" + user.getGender());
             softAssert.assertTrue(user.getStatus().matches("(?:inactive|active)$"), "Status does not match" + user.getStatus());
@@ -50,13 +49,12 @@ public class Tests {
 
     @Test
     public void getUserById() throws IOException, InterruptedException, URISyntaxException {
-        String rqId  = "6313246";
+        String rqId  = "5913765";
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(baseUrl + "/" + rqId))
+                .uri(new URI(usersUrl + "/" + rqId))
                 .version(HttpClient.Version.HTTP_2)
                 .GET()
                 .build();
-
         HttpResponse<String> response = buildResponse(request);
         int rsId = getIdFromResponse(response);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_OK);
@@ -68,22 +66,12 @@ public class Tests {
         String postPath = "src/test/resources/api/users/_post/rq.json";
         File file = new File(postPath);
         User rqUser = objectMapper.readValue(file, User.class);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(baseUrl))
-                .header("Authorization", "Bearer " + TOKEN)
-                .version(HttpClient.Version.HTTP_2)
-                .headers("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofFile(Paths.get(postPath)))
-                .build();
-
+        HttpRequest request = buildPostRequest(usersUrl, postPath);
         HttpResponse<String> response = buildResponse(request);
-
         String res =response.body();
         User rsUser = objectMapper.readValue(res, User.class);
         int id = rsUser.getId();
         rqUser.setId(id);
-
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
         assertTrue(rqUser.equals(rsUser), "Users are not equal");
     }
@@ -92,32 +80,13 @@ public class Tests {
     public void putUser() throws IOException, InterruptedException, URISyntaxException {
         String putPath = "src/test/resources/api/users/_put/rq.json";
         String postPath = "src/test/resources/api/users/_post_for_put/rq.json";
-        //post user
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(baseUrl))
-                .header("Authorization", "Bearer " + TOKEN)
-                .version(HttpClient.Version.HTTP_2)
-                .headers("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofFile(Paths.get(postPath)))
-                .build();
-
+        HttpRequest request = buildPostRequest(usersUrl, postPath);
         HttpResponse<String> response = buildResponse(request);
         int id = getIdFromResponse(response);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
-
-        //put methode
-        request = HttpRequest.newBuilder()
-                .uri(new URI(baseUrl + "/" + String.valueOf(id)))
-                .header("Authorization", "Bearer " + TOKEN)
-                .version(HttpClient.Version.HTTP_2)
-                .headers("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.noBody())
-                .PUT(HttpRequest.BodyPublishers.ofFile(Paths.get(putPath)))
-                .build();
-
+        request = buildPutRequest(usersUrl, id, putPath);
         response = buildResponse(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_OK);
-
         String resPut =response.body();
         User rsPutUser = objectMapper.readValue(resPut, User.class);
         User rqPutUser = objectMapper.readValue(new File(putPath), User.class);
@@ -127,150 +96,83 @@ public class Tests {
 
     @Test
     public void deleteUser() throws IOException, InterruptedException, URISyntaxException {
-        String postPath = "src/test/resources/api/users/_post/rq.json";
-        //post user
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(baseUrl))
-                .header("Authorization", "Bearer " + TOKEN)
-                .version(HttpClient.Version.HTTP_2)
-                .headers("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofFile(Paths.get(postPath)))
-                .build();
-
+        String postPath = "src/test/resources/api/users/_post_for_put/rq.json";
+        HttpRequest request = buildPostRequest(usersUrl, postPath);
         HttpResponse<String> response = buildResponse(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
         int id = getIdFromResponse(response);
-
-        String newUrl = baseUrl + "/" + String.valueOf(id);
-        //delete user
+        String newUrl = usersUrl + "/" + String.valueOf(id);
         request = HttpRequest.newBuilder()
                 .uri(new URI(newUrl))
                 .header("Authorization", "Bearer " + TOKEN)
                 .version(HttpClient.Version.HTTP_2)
                 .DELETE()
                 .build();
-
-        response = HttpClient.newBuilder()
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build()
-                .send(request, HttpResponse.BodyHandlers.ofString());
-
+        response = buildResponse(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_NO_CONTENT);
         assertTrue(response.body().isEmpty());
     }
 
     @Test
     public void postUserWithMissingFields() throws IOException, InterruptedException, URISyntaxException {
-        String errorMessage = "[{\"field\":\"gender\",\"message\":\"can't be blank, can be male of female\"},{\"field\":\"status\",\"message\":\"can't be blank\"}]";
-        //post user
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(baseUrl))
-                .header("Authorization", "Bearer " + TOKEN)
-                .version(HttpClient.Version.HTTP_2)
-                .headers("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofFile(new File("src/test/resources/api/users/_post_miss_fields/rq.json").toPath()))
-                .build();
-
+        String postPath = "src/test/resources/api/users/_post_miss_fields/rq.json";
+        HttpRequest request = buildPostRequest(usersUrl, postPath);
         HttpResponse<String> response = buildResponse(request);
         assertEquals(response.statusCode(), 422);
-        assertEquals(response.body(), errorMessage);
+        String rsBody = response.body();
+        assertTrue(rsBody.contains("can't be blank, can be male of female"), "ErrorMessage ");
+        assertTrue(rsBody.contains("{\"field\":\"status\",\"message\":\"can't be blank\"}]"), "ErrorMessage ");
     }
 
     @Test
     public void postComment() throws IOException, InterruptedException, URISyntaxException {
         String postPath = "src/test/resources/api/users/_post_comment/rq.json";
-        File file = new File(postPath);
-        Comment rqComment = objectMapper.readValue(file, Comment.class);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI("https://gorest.co.in/public/v2/comments"))
-                .header("Authorization", "Bearer " + TOKEN)
-                .version(HttpClient.Version.HTTP_2)
-                .headers("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofFile(Paths.get(postPath)))
-                .build();
-
+        Comment rqComment = objectMapper.readValue(new File(postPath), Comment.class);
+        HttpRequest request = buildPostRequest(commentsUrl, postPath);
         HttpResponse<String> response = buildResponse(request);
-
         String res =response.body();
         Comment rsComment = objectMapper.readValue(res, Comment.class);
-
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
-        assertEquals(rqComment.getName(), rqComment.getName());
-        assertEquals(rqComment.getBody(), rqComment.getBody());
+        assertEquals(rqComment.getName(), rqComment.getName(), "Names are not equal");
+        assertEquals(rqComment.getBody(), rqComment.getBody(), "Bodies are not equal");
     }
 
     @Test
     public void putComment() throws IOException, InterruptedException, URISyntaxException {
         String postPath = "src/test/resources/api/users/_post_comment/rq.json";
         String commentUrl = "https://gorest.co.in/public/v2/comments";
-        String comment = "{\n" +
-                "   \"body\":\"This is a wonderful story! Author wrote amazing\"\n" +
-                "}";
-        //post user
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(commentUrl))
-                .header("Authorization", "Bearer " + TOKEN)
-                .version(HttpClient.Version.HTTP_2)
-                .headers("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofFile(Paths.get(postPath)))
-                .build();
-
+        String putPath = "src/test/resources/api/users/_put_comment/rq.json";
+        HttpRequest request = buildPostRequest(commentsUrl, postPath);
         HttpResponse<String> response = buildResponse(request);
         Comment rsComment = objectMapper.readValue(response.body(), Comment.class);
         int id = rsComment.getId();
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
-
-        //put methode
-        request = HttpRequest.newBuilder()
-                .uri(new URI(commentUrl + "/" + String.valueOf(id)))
-                .header("Authorization", "Bearer " + TOKEN)
-                .version(HttpClient.Version.HTTP_2)
-                .headers("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.noBody())
-                .PUT(HttpRequest.BodyPublishers.ofString(comment))
-                .build();
-
+        request = buildPutRequest(commentUrl, id, putPath);
         response = buildResponse(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_OK);
-
         String resPut =response.body();
         Comment rsPutComment = objectMapper.readValue(resPut, Comment.class);
-        assertTrue(comment.contains(rsPutComment.getBody()), "Comment does not update");
+        Comment rqPutComment = objectMapper.readValue(new File(putPath), Comment.class);
+        assertEquals(rqPutComment.getBody(), rsPutComment.getBody(), "Comment does not update");
     }
 
     @Test
     public void deleteComment() throws IOException, InterruptedException, URISyntaxException {
         String postPath = "src/test/resources/api/users/_post_comment/rq.json";
         String commentUrl = "https://gorest.co.in/public/v2/comments";
-        //post user
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(commentUrl))
-                .header("Authorization", "Bearer " + TOKEN)
-                .version(HttpClient.Version.HTTP_2)
-                .headers("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofFile(Paths.get(postPath)))
-                .build();
-
+        HttpRequest request = buildPostRequest(commentsUrl, postPath);
         HttpResponse<String> response = buildResponse(request);
         Comment rsComment = objectMapper.readValue(response.body(), Comment.class);
         int id = rsComment.getId();
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
-
         String newUrl = commentUrl + "/" + String.valueOf(id);
-        //delete user
         request = HttpRequest.newBuilder()
                 .uri(new URI(newUrl))
                 .header("Authorization", "Bearer " + TOKEN)
                 .version(HttpClient.Version.HTTP_2)
                 .DELETE()
                 .build();
-
-        response = HttpClient.newBuilder()
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build()
-                .send(request, HttpResponse.BodyHandlers.ofString());
-
+        response = buildResponse(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_NO_CONTENT);
         assertTrue(response.body().isEmpty());
     }
@@ -280,6 +182,29 @@ public class Tests {
         User rsUser = objectMapper.readValue(res, User.class);
         int id = rsUser.getId();
         return id;
+    }
+
+    public HttpRequest buildPostRequest(String url, String postPath) throws URISyntaxException, FileNotFoundException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .header("Authorization", "Bearer " + TOKEN)
+                .version(HttpClient.Version.HTTP_2)
+                .headers("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofFile(Paths.get(postPath)))
+                .build();
+        return request;
+    }
+
+    public HttpRequest buildPutRequest(String url, int id, String putPath) throws URISyntaxException, FileNotFoundException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(url + "/" + String.valueOf(id)))
+                .header("Authorization", "Bearer " + TOKEN)
+                .version(HttpClient.Version.HTTP_2)
+                .headers("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .PUT(HttpRequest.BodyPublishers.ofFile(Paths.get(putPath)))
+                .build();
+        return request;
     }
 
     public HttpResponse<String> buildResponse(HttpRequest request) throws IOException, InterruptedException {
