@@ -85,7 +85,7 @@ public class Tests {
         rqUser.setId(id);
 
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
-        compareUserData(rqUser, rsUser);
+        assertTrue(rqUser.equals(rsUser), "Users are not equal");
     }
 
     @Test
@@ -122,7 +122,7 @@ public class Tests {
         User rsPutUser = objectMapper.readValue(resPut, User.class);
         User rqPutUser = objectMapper.readValue(new File(putPath), User.class);
         rqPutUser.setId(id);
-        compareUserData(rqPutUser, rsPutUser);
+        assertTrue(rqPutUser.equals(rsPutUser), "Users are not equal");
     }
 
     @Test
@@ -288,13 +288,5 @@ public class Tests {
                 .build()
                 .send(request, HttpResponse.BodyHandlers.ofString());
         return response;
-    }
-
-    public void compareUserData(User rqUser, User rsUser) {
-        assertEquals(rqUser.getId(), rsUser.getId());
-        assertEquals(rqUser.getName(), rsUser.getName());
-        assertEquals(rqUser.getEmail(), rsUser.getEmail());
-        assertEquals(rqUser.getGender(), rsUser.getGender());
-        assertEquals(rqUser.getStatus(), rsUser.getStatus());
     }
 }
