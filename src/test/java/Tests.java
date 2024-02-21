@@ -13,21 +13,20 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.testng.Assert.*;
 
 public class Tests {
 
-    final String TOKEN = "493ea62f49818ae1b6bd35cb27bdf8e20e73fb75e1d37a86117f3a0305364a2f";
-    final String baseUrl = "https://gorest.co.in/public/v2/users";
+    private static final String TOKEN = "";
+    private static final String baseUrl = "https://gorest.co.in/public/v2/users";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     public void getUsers() throws IOException, InterruptedException, URISyntaxException {
         File file = new File("src/test/resources/api/users/_get/rs.json");
 
-        ObjectMapper objectMapper = new ObjectMapper();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(baseUrl))
                 .version(HttpClient.Version.HTTP_2)
@@ -68,7 +67,6 @@ public class Tests {
     public void postUser() throws IOException, InterruptedException, URISyntaxException {
         String postPath = "src/test/resources/api/users/_post/rq.json";
         File file = new File(postPath);
-        ObjectMapper objectMapper = new ObjectMapper();
         User rqUser = objectMapper.readValue(file, User.class);
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -121,7 +119,6 @@ public class Tests {
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_OK);
 
         String resPut =response.body();
-        ObjectMapper objectMapper = new ObjectMapper();
         User rsPutUser = objectMapper.readValue(resPut, User.class);
         User rqPutUser = objectMapper.readValue(new File(putPath), User.class);
         rqPutUser.setId(id);
@@ -183,7 +180,6 @@ public class Tests {
     public void postComment() throws IOException, InterruptedException, URISyntaxException {
         String postPath = "src/test/resources/api/users/_post_comment/rq.json";
         File file = new File(postPath);
-        ObjectMapper objectMapper = new ObjectMapper();
         Comment rqComment = objectMapper.readValue(file, Comment.class);
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -221,7 +217,6 @@ public class Tests {
                 .build();
 
         HttpResponse<String> response = buildResponse(request);
-        ObjectMapper objectMapper = new ObjectMapper();
         Comment rsComment = objectMapper.readValue(response.body(), Comment.class);
         int id = rsComment.getId();
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
@@ -258,7 +253,6 @@ public class Tests {
                 .build();
 
         HttpResponse<String> response = buildResponse(request);
-        ObjectMapper objectMapper = new ObjectMapper();
         Comment rsComment = objectMapper.readValue(response.body(), Comment.class);
         int id = rsComment.getId();
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
@@ -283,7 +277,6 @@ public class Tests {
 
     public int getIdFromResponse(HttpResponse<String> response) throws JsonProcessingException {
         String res = response.body();
-        ObjectMapper objectMapper = new ObjectMapper();
         User rsUser = objectMapper.readValue(res, User.class);
         int id = rsUser.getId();
         return id;
