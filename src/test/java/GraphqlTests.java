@@ -19,14 +19,13 @@ import static org.testng.Assert.assertTrue;
 
 public class GraphqlTests {
 
-    private static final String URL = "https://gorest.co.in/public/v2/graphql";
-    private static final String BASIC_PATH = "src/test/resources/api/graphql/";
-    private static final String TOKEN = "493ea62f49818ae1b6bd35cb27bdf8e20e73fb75e1d37a86117f3a0305364a2f";
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
 
     @Test
     public void getUsers() throws IOException, InterruptedException, URISyntaxException {
-        String rq = Files.readString(Path.of(BASIC_PATH + "_get/rq.json"));
+        String rq = Files.readString(Path.of(Constants.BASIC_PATH_GRAPHQL + "_get/rq.json"));
         HttpRequest request = sendRequest(rq);
         HttpResponse<String> response = getResponse(request);
         List<Map<String, Object>> userList = JsonPath.from(response.body()).getList("data.users.nodes");
@@ -37,7 +36,7 @@ public class GraphqlTests {
 
     @Test
     public void getUserById() throws IOException, InterruptedException, URISyntaxException {
-        String getByIdPath = BASIC_PATH + "_get_by_id/rq.json";
+        String getByIdPath = Constants.BASIC_PATH_GRAPHQL + "_get_by_id/rq.json";
         String requestTmp = Files.readString(Path.of(getByIdPath));
         String id = "5850514";
         String rq = String.format(requestTmp, id);
@@ -53,7 +52,7 @@ public class GraphqlTests {
         String email = "tom@kruz.example";
         String gender = "male";
         String status = "active";
-        String postPath = BASIC_PATH + "_post/rq.json";
+        String postPath = Constants.BASIC_PATH_GRAPHQL + "_post/rq.json";
         String rq = getPath(postPath, name, email, gender, status);
         HttpRequest request = sendRequest(rq);
         HttpResponse<String> response = getResponse(request);
@@ -72,7 +71,7 @@ public class GraphqlTests {
 
     @Test
     public void putUser() throws IOException, InterruptedException, URISyntaxException {
-        String putPath = BASIC_PATH + "_put/rq.json";
+        String putPath = Constants.BASIC_PATH_GRAPHQL + "_put/rq.json";
         String userId = postUser("Andreas", "tom@kruz.example", "male", "active");
         String requestTmp = Files.readString(Path.of(putPath));
         String putRq = String.format(requestTmp, userId, "Sara", "sara@hermas.donut", "female", "inactive");
@@ -86,13 +85,13 @@ public class GraphqlTests {
 
     @Test
     public void deleteUser() throws IOException, InterruptedException, URISyntaxException {
-        String deletePath = BASIC_PATH + "_delete/rq.json";
+        String deletePath = Constants.BASIC_PATH_GRAPHQL + "_delete/rq.json";
         String userId = postUser("Rayn", "rayn@red.example", "male", "inactive");
         String requestTmp = Files.readString(Path.of(deletePath));
         String rq = String.format(requestTmp, userId);
         HttpRequest request = sendRequest(rq);
         HttpResponse<String> response = getResponse(request);
-        String rsPath = BASIC_PATH + "_delete/rs.json";
+        String rsPath = Constants.BASIC_PATH_GRAPHQL + "_delete/rs.json";
         String expectedRs = Files.readString(Path.of(rsPath));
         assertEquals(expectedRs, response.body(), "Responses are not equal");
     }
@@ -108,8 +107,8 @@ public class GraphqlTests {
 
     public HttpRequest sendRequest(String path) throws URISyntaxException, IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(URL))
-                .header("Authorization", "Bearer " + TOKEN)
+                .uri(new URI(Constants.URL_GRAPHQL))
+                .header("Authorization", "Bearer " + Constants.TOKEN)
                 .version(HttpClient.Version.HTTP_2)
                 .headers("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(path))
@@ -124,7 +123,7 @@ public class GraphqlTests {
     }
 
     public String postUser(String name, String email, String gender, String status) throws IOException, URISyntaxException, InterruptedException {
-        String pathTmp = BASIC_PATH + "_post/rq.json";
+        String pathTmp = Constants.BASIC_PATH_GRAPHQL + "_post/rq.json";
         String postRq = getPath(pathTmp, name, email, gender, status);
         HttpRequest request = sendRequest(postRq);
         HttpResponse<String> response = getResponse(request);
