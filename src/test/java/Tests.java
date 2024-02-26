@@ -24,7 +24,7 @@ public class Tests {
     @Test
     public void getUsers() throws IOException, InterruptedException, URISyntaxException {
         HttpRequest request = buildGetRequest(Constants.URL_USERS);
-        HttpResponse<String> response = buildResponse(request);
+        HttpResponse<String> response = sendRequest(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_OK);
         List<User> userListFromResponse = objectMapper.readValue(response.body(), new TypeReference<List<User>>() {});
         for (User user : userListFromResponse) {
@@ -36,7 +36,7 @@ public class Tests {
     public void getUserById() throws IOException, InterruptedException, URISyntaxException {
         String rqId = "5850495";
         HttpRequest request = buildGetRequest(Constants.URL_USERS + "/" + rqId);
-        HttpResponse<String> response = buildResponse(request);
+        HttpResponse<String> response = sendRequest(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_OK);
         int rsId = getUserIdFromResponse(response);
         User user = objectMapper.readValue(response.body(), new TypeReference<User>() {});
@@ -49,7 +49,7 @@ public class Tests {
         String postPath = Constants.BASIC_PATH_USERS + "_post/rq.json";
         User rqUser = objectMapper.readValue(new File(postPath), User.class);
         HttpRequest request = buildPostRequest(Constants.URL_USERS, postPath);
-        HttpResponse<String> response = buildResponse(request);
+        HttpResponse<String> response = sendRequest(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
         User rsUser = objectMapper.readValue(response.body(), User.class);
         rqUser.setId(rsUser.getId());
@@ -61,14 +61,13 @@ public class Tests {
         String putPath = Constants.BASIC_PATH_USERS + "_put/rq.json";
         String postPath = Constants.BASIC_PATH_USERS + "_post_for_put/rq.json";
         HttpRequest request = buildPostRequest(Constants.URL_USERS, postPath);
-        HttpResponse<String> response = buildResponse(request);
+        HttpResponse<String> response = sendRequest(request);
         int id = getUserIdFromResponse(response);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
         request = buildPutRequest(Constants.URL_USERS, id, putPath);
-        response = buildResponse(request);
+        response = sendRequest(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_OK);
-        String resPut = response.body();
-        User rsPutUser = objectMapper.readValue(resPut, User.class);
+        User rsPutUser = objectMapper.readValue(response.body(), User.class);
         User rqPutUser = objectMapper.readValue(new File(putPath), User.class);
         rqPutUser.setId(id);
         assertTrue(rqPutUser.equals(rsPutUser), "Users are not equal");
@@ -78,12 +77,12 @@ public class Tests {
     public void deleteUser() throws IOException, InterruptedException, URISyntaxException {
         String postPath = Constants.BASIC_PATH_USERS + "_post_for_put/rq.json";
         HttpRequest request = buildPostRequest(Constants.URL_USERS, postPath);
-        HttpResponse<String> response = buildResponse(request);
+        HttpResponse<String> response = sendRequest(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
         int id = getUserIdFromResponse(response);
         String newUrl = Constants.URL_USERS + "/" + String.valueOf(id);
         request = buildDeleteRequest(newUrl);
-        response = buildResponse(request);
+        response = sendRequest(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_NO_CONTENT);
         assertTrue(response.body().isEmpty());
     }
@@ -92,7 +91,7 @@ public class Tests {
     public void postUserWithMissingFields() throws IOException, InterruptedException, URISyntaxException {
         String postPath = Constants.BASIC_PATH_USERS + "_post_miss_fields/rq.json";
         HttpRequest request = buildPostRequest(Constants.URL_USERS, postPath);
-        HttpResponse<String> response = buildResponse(request);
+        HttpResponse<String> response = sendRequest(request);
         assertEquals(response.statusCode(), 422);
         String rsBody = response.body();
         assertTrue(rsBody.contains("can't be blank, can be male of female"), "ErrorMessage ");
@@ -104,25 +103,20 @@ public class Tests {
         String postPath = Constants.BASIC_PATH_USERS + "_post_comment/rq.json";
         Comment rqComment = objectMapper.readValue(new File(postPath), Comment.class);
         HttpRequest request = buildPostRequest(Constants.URL_COMMENTS, postPath);
-        HttpResponse<String> response = buildResponse(request);
+        HttpResponse<String> response = sendRequest(request);
+        assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
         String res = response.body();
         Comment rsComment = objectMapper.readValue(res, Comment.class);
-        assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
         assertEquals(rqComment.getName(), rsComment.getName(), "Names are not equal");
         assertEquals(rqComment.getBody(), rsComment.getBody(), "Bodies are not equal");
     }
 
     @Test
     public void putComment() throws IOException, InterruptedException, URISyntaxException {
-        String postPath = Constants.BASIC_PATH_USERS + "_post_comment/rq.json";
         String putPath = Constants.BASIC_PATH_USERS + "_put_comment/rq.json";
-        HttpRequest request = buildPostRequest(Constants.URL_COMMENTS, postPath);
-        HttpResponse<String> response = buildResponse(request);
-        Comment rsComment = objectMapper.readValue(response.body(), Comment.class);
-        int id = rsComment.getId();
-        assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
-        request = buildPutRequest(Constants.URL_COMMENTS, id, putPath);
-        response = buildResponse(request);
+        int id = getCommentIdFromResponse();
+        HttpRequest request = buildPutRequest(Constants.URL_COMMENTS, id, putPath);
+        HttpResponse<String> response = sendRequest(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_OK);
         String resPut = response.body();
         Comment rsPutComment = objectMapper.readValue(resPut, Comment.class);
@@ -132,15 +126,10 @@ public class Tests {
 
     @Test
     public void deleteComment() throws IOException, InterruptedException, URISyntaxException {
-        String postPath = Constants.BASIC_PATH_USERS + "_post_comment/rq.json";
-        HttpRequest request = buildPostRequest(Constants.URL_COMMENTS, postPath);
-        HttpResponse<String> response = buildResponse(request);
-        Comment rsComment = objectMapper.readValue(response.body(), Comment.class);
-        int id = rsComment.getId();
-        assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
+        int id = getCommentIdFromResponse();;
         String newUrl = Constants.URL_COMMENTS + "/" + String.valueOf(id);
-        request = buildDeleteRequest(newUrl);
-        response = buildResponse(request);
+        HttpRequest request = buildDeleteRequest(newUrl);
+        HttpResponse<String> response = sendRequest(request);
         assertEquals(response.statusCode(), HttpURLConnection.HTTP_NO_CONTENT);
         assertTrue(response.body().isEmpty());
     }
@@ -194,12 +183,22 @@ public class Tests {
         return request;
     }
 
-    public HttpResponse<String> buildResponse(HttpRequest request) throws IOException, InterruptedException {
+    public HttpResponse<String> sendRequest(HttpRequest request) throws IOException, InterruptedException {
         HttpResponse<String> response = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build()
                 .send(request, HttpResponse.BodyHandlers.ofString());
         return response;
+    }
+
+    public int getCommentIdFromResponse() throws IOException, URISyntaxException, InterruptedException {
+        String postPath = Constants.BASIC_PATH_USERS + "_post_comment/rq.json";
+        HttpRequest request = buildPostRequest(Constants.URL_COMMENTS, postPath);
+        HttpResponse<String> response = sendRequest(request);
+        assertEquals(response.statusCode(), HttpURLConnection.HTTP_CREATED);
+        Comment rsComment = objectMapper.readValue(response.body(), Comment.class);
+        int id = rsComment.getId();
+        return id;
     }
 
     public void verifyValidData(User user) {

@@ -1,4 +1,4 @@
-public class Constants {
+public abstract class Constants {
 
     protected static final String URL_USERS = "https://gorest.co.in/public/v2/users";
     protected static final String URL_COMMENTS = "https://gorest.co.in/public/v2/comments";
