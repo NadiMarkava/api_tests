@@ -7,10 +7,10 @@ import java.util.List;
 
 public class ShoppingCart extends BaseComponent{
 
-    private By buttonCheckOut = By.xpath("//button[text()='Checkout']");
-    private By buttonContinue = By.xpath("//button[text()='Continue Shopping']");
+    private By buttonCheckOut = By.xpath(".//button[text()='Checkout']");
+    private By buttonContinue = By.xpath(".//button[text()='Continue Shopping']");
 
-    private By buttonRemove = By.xpath("//button[text()='Remove']");
+    private By buttonRemove = By.xpath(".//button[text()='Remove']");
 
     public ShoppingCart(WebElement root) {
         super(root);

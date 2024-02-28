@@ -70,8 +70,7 @@ public class WebTest {
     public void testUserCanAddAndRemoveProductInCart() {
         ProductsPage productsPage = login(driver);
         List<Product> productsList = productsPage.getProducts();
-        Product product = productsList.get(1);
-//                getRandomProduct(productsList);
+        Product product = getRandomProduct(productsList);
         String productName = product.getName();
         String productDesc = product.getDescription();
         String productPrice = product.getPriceText();

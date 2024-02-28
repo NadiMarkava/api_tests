@@ -8,7 +8,7 @@ import java.util.List;
 public class Sorting extends BaseComponent{
 
     private By selectedOption = By.className("active_option");
-    private By sortOptionName = By.xpath("//select[@class='product_sort_container']/option");
+    private By sortOptionName = By.xpath(".//select[@class='product_sort_container']/option");
 
     public Sorting(WebElement root) {
         super(root);
