@@ -8,9 +8,6 @@ import java.util.function.Predicate;
 public class ProductsPage extends BasePage {
     private By productTitle = By.className("title");
 
-    private By selectedOption = By.className("active_option");
-    private By sortOptionName = By.xpath("//select[@class='product_sort_container']/option");
-
     public ProductsPage(WebDriver driver) {
         super(driver);
     }
@@ -34,18 +31,17 @@ public class ProductsPage extends BasePage {
                 .orElseThrow();
     }
 
-    public String getSortActiveOption() {
-        return driver.findElement(selectedOption).getText();
+    public Sorting getSortComponent(){
+        return new Sorting(driver.findElement(By.className("select_container")));
     }
 
-    public List<String> getSortOptionNames() {
-        return driver.findElements(sortOptionName).stream()
-                .map(o -> o.getText())
-                .toList();
+    public ShoppingCart clickCartButton() {
+        driver.findElement(By.className("shopping_cart_link")).click();
+        return new ShoppingCart(driver.findElement(By.className("cart_contents_container")));
     }
 
-    public void selectSortOption(String option) {
-        driver.findElement(By.xpath(String.format("//select/option[text()='%s']", option))).click();
+    public CheckOut getCheckOutComponent() {
+        return new CheckOut(driver.findElement(By.id("checkout_info_container")));
     }
 }
 

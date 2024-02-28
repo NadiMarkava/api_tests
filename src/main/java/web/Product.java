@@ -15,7 +15,7 @@ public class Product extends BaseComponent {
     protected WebDriver driver;
     private By productName = By.className("inventory_item_name");
     private By productDesc = By.className("inventory_item_desc");
-    private By productImage = By.className("inventory_item_img");
+    private By productImage = By.xpath("//div[@class='inventory_item_img']//img");
     private By productPrice = By.className("inventory_item_price");
     private By button = By.xpath("//div[@class='pricebar']//button");
 
@@ -36,11 +36,15 @@ public class Product extends BaseComponent {
     }
 
     public String getImage() {
-        return root.findElement(productImage).getText();
+        return root.findElement(productImage).getAttribute("src");
     }
 
     public String getButtonName() {
         return root.findElement(button).getText();
+    }
+
+    public String getPriceText() {
+        return root.findElement(productPrice).getText();
     }
 
     public BigDecimal getPrice() {
