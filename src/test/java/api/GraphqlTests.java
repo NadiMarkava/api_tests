@@ -1,3 +1,5 @@
+package api;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.path.json.JsonPath;
 import org.testng.annotations.Test;

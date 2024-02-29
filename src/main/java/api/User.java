@@ -1,4 +1,4 @@
-import com.fasterxml.jackson.annotation.JsonProperty;
+package api;
 
 public class User {
     private int id;
