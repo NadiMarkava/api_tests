@@ -10,7 +10,4 @@ public abstract class BaseComponent {
         this.root = root;
     }
 
-    public BaseComponent() {
-
-    }
 }

@@ -10,8 +10,6 @@ import java.math.RoundingMode;
 
 public class Product extends BaseComponent {
 
-    protected WebDriver driver;
-
     private By productName = By.className("inventory_item_name");
 
     private By productDesc = By.className("inventory_item_desc");
