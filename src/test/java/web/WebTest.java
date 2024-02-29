@@ -14,6 +14,7 @@ import web.pages.ShoppingCartPage;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import static org.testng.Assert.*;
@@ -124,9 +125,18 @@ public class WebTest {
         assertEquals(6, productsList.size(), "Product sizes are not equal");
     }
 
+    @Test
+    public void continueShoppingButtonTest() {
+      
+
+
+    }
+
     public ProductsPage login() {
         String username = "standard_user";
         String password = "secret_sauce";
+        Thread thread = new Thread(new Runner());
+        thread.run();
         this.driver = new ChromeDriver();
         LoginPage login = new LoginPage(this.driver);
         login.loginAs(username, password);

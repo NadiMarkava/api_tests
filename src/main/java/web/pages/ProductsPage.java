@@ -2,8 +2,10 @@ package web.pages;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import web.components.Product;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -14,6 +16,8 @@ public class ProductsPage extends BasePage {
 
     public ProductsPage(WebDriver driver) {
         super(driver);
+        new WebDriverWait(driver, Duration.ofSeconds(3))
+                .until(d -> d.findElement(By.className("header_container")));
     }
 
     public List<Product> getProducts() {
